@@ -19,20 +19,20 @@ rdkit_quiet()
 # BO w/ "reg" and init_trip 
 # (same as run 1. but also now w/ new implemenation of faillures so don't set logP ==0 for invalid mols )
 # 2. 
-# tmux attach -t setup2 
-# gerenating "dec" data (train MDN w/ dec once this is done! )
+# remaking triplet encoder dataset ughhh (train_data_trip1)
+# 
 # 3. 
-# tmux attach -t setup3
 # BO w/ "reg" and vanilla, 34! --> verification :) 
 # 4. 
-# tmux attach -t setup4
 # BO w/ "reg" and vanilla (wandb track!, now at 41!!!!)
 # 5. 
-# tmux attach -t setup5
 # BO w/ "reg" and vanilla (wandb tracking table of SMILES for best! )
         # #check on setup5 to make sure we start printing "logging new best smile"! (after 4.9ish/init_max)
 #6.
 # BO w/ "reg" and vanilla, VANILLA ENCODER/DATA!
+#7.
+# Remaking vinilla enc dataset ughhh 
+
 
 #NOTE: RAN:
 # 1. 

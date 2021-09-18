@@ -14,49 +14,50 @@ vocab_file = "weighted_retraining/data/chem/zinc/orig_model/vocab.txt"
 with open(vocab_file) as f:
     vcb= Vocab([x.strip() for x in f.readlines()])
 model: JTVAE = JTVAE.load_from_checkpoint(path_to_model, vocab=vcb)
+make_y_dec = False 
 
-# Get y_dec (logPs from decoded z_vecs)
-def latent_z_to_max_logP(z_vectors, samps_per_z = 40):
-    z_tree_vecs = torch.tensor(z_vectors[:,0:28]).float()
-    # print("tree vecs shape",z_tree_vecs.shape ) tree vecs shape (218969, 28)
-    z_mol_vecs = torch.tensor(z_vectors[:,28:56]).float()
-    # print("mols vecs shape",z_mol_vecs.shape ) # mols vecs shape (218969, 28)
-    logP_arrays = []
-    failures = 0
-    for i in range(samps_per_z):
-        reconstructed_smiles = model.jtnn_vae.decode(z_tree_vecs, z_mol_vecs, prob_decode = True)
-        print("finished decode!")
-        logPs = []
-        for smile in reconstructed_smiles: 
-            logp = penalized_logP(smile)
-            if logp is not None:
-                logPs.append(logp) 
-            else:
-                print("uh oh, invalid smile:", smile)
-                logPs.append(0)
-                failures += 1
-                print("num fails", failures)
-        logPs = np.array(logPs)
-        print(f"shape logPs sampe {i}", logPs.shape) # (num_zs,) ie (3,)
-        logP_arrays.append(logPs)
-    all_logps = np.vstack(logP_arrays)
-    # print("all shape", all_logps.shape) # all shape (40 , num_zs) ie (40,3)
-    max_log_ps = np.max(all_logps, axis = 0)
-    print("FINAL Y TRAIN SHAPE", max_log_ps.shape) # (num_zs), ie (3,), YAY! 
-    return max_log_ps # model.jtnn_vae.decode(z_tree_vecs, z_mol_vecs, prob_decode = True)
+if make_y_dec: 
+    # Get y_dec (logPs from decoded z_vecs)
+    def latent_z_to_max_logP(z_vectors, samps_per_z = 40):
+        z_tree_vecs = torch.tensor(z_vectors[:,0:28]).float()
+        # print("tree vecs shape",z_tree_vecs.shape ) tree vecs shape (218969, 28)
+        z_mol_vecs = torch.tensor(z_vectors[:,28:56]).float()
+        # print("mols vecs shape",z_mol_vecs.shape ) # mols vecs shape (218969, 28)
+        logP_arrays = []
+        failures = 0
+        for i in range(samps_per_z):
+            reconstructed_smiles = model.jtnn_vae.decode(z_tree_vecs, z_mol_vecs, prob_decode = True)
+            print("finished decode!")
+            logPs = []
+            for smile in reconstructed_smiles: 
+                logp = penalized_logP(smile)
+                if logp is not None:
+                    logPs.append(logp) 
+                else:
+                    print("uh oh, invalid smile:", smile)
+                    logPs.append(0)
+                    failures += 1
+                    print("num fails", failures)
+            logPs = np.array(logPs)
+            print(f"shape logPs sampe {i}", logPs.shape) # (num_zs,) ie (3,)
+            logP_arrays.append(logPs)
+        all_logps = np.vstack(logP_arrays)
+        # print("all shape", all_logps.shape) # all shape (40 , num_zs) ie (40,3)
+        max_log_ps = np.max(all_logps, axis = 0)
+        print("FINAL Y TRAIN SHAPE", max_log_ps.shape) # (num_zs), ie (3,), YAY! 
+        return max_log_ps # model.jtnn_vae.decode(z_tree_vecs, z_mol_vecs, prob_decode = True)
 
-path_to_train_z = 'train_data/train_z.csv'
-train_z= pd.read_csv(path_to_train_z, header=None).to_numpy().squeeze()
-# train_z = train_z[0:3]
-print("train z shape", train_z.shape) # train z shape (218969, 56)
-max_LOGPS = latent_z_to_max_logP(train_z)
-num_zeros = max_LOGPS[np.where(max_LOGPS == 0)].size
-print(f"Number of zeros (implying faiulre to generate valid mol): {num_zeros}")
-y_df = pd.DataFrame(max_LOGPS)
-y_df.to_csv('train_data/train_y_dec.csv', header=None, index = None)
+    path_to_train_z = 'train_data_trip1/train_z.csv'
+    train_z= pd.read_csv(path_to_train_z, header=None).to_numpy().squeeze()
+    # train_z = train_z[0:3]
+    print("train z shape", train_z.shape) # train z shape (218969, 56)
+    max_LOGPS = latent_z_to_max_logP(train_z)
+    num_zeros = max_LOGPS[np.where(max_LOGPS == 0)].size
+    print(f"Number of zeros (implying faiulre to generate valid mol): {num_zeros}")
+    y_df = pd.DataFrame(max_LOGPS)
+    y_df.to_csv('train_data_trip1/train_y_dec.csv', header=None, index = None)
+    sys.exit()
 
-
-sys.exit()
 
 def smiles_to_z_vecs(smiles_list):
     # smiles_list = [get_good_mol_smile()]
@@ -101,7 +102,7 @@ with torch.no_grad():
     print("final train z shape", train_z.shape)
     z_np = train_z.numpy() 
     z_df = pd.DataFrame(z_np)
-    z_df.to_csv('train_data/train_z.csv', header=None, index = None)
+    z_df.to_csv('train_data_trip1/train_z.csv', header=None, index = None)
 
 logPs = []
 for smile in train_x: 
@@ -110,7 +111,7 @@ for smile in train_x:
 y_np = np.array(logPs)
 print("train_y_shape", y_np.shape)
 y_df = pd.DataFrame(y_np)
-y_df.to_csv('train_data/train_y.csv', header=None, index = None)
+y_df.to_csv('train_data_trip1/train_y.csv', header=None, index = None)
 # may have to edit this so y's are 
 # from DECODED z vecs like before! 
 # do both and compare results? 
