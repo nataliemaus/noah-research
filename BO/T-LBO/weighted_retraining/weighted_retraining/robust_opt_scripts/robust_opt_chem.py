@@ -161,9 +161,15 @@ def retrain_model(model, datamodule, save_dir, version_str, num_epochs, gpu, sto
     train_pbar = SubmissivePlProgressbar(process_position=1)
 
     # Create custom saver and logger
+    print("         Save dir:", save_dir)
+    print("         Version str:", version_str)# Version str: retrain_0
+    # Save dir: ~/LSO-storage/logs/opt/chem/rank/k_0.001/r_50/
+    # paper-mol-z_dim_56-init_0.1-contrast-thr-0.1-b_1-bkl_0.001_
+    # pretrain-vanilla_bs-256/False/seed0/retraining
     tb_logger = TensorBoardLogger(
         save_dir=save_dir, version=version_str, name=""
     )
+    # sys.exit()
     checkpointer = pl.callbacks.ModelCheckpoint(save_last=True, monitor="loss/val", )
 
     # Handle fractional epochs
@@ -499,31 +505,34 @@ def main():
     pl.seed_everything(args.seed)
 
     # create result directory
-    result_dir = get_path(
-        lso_strategy=args.lso_strategy,
-        weight_type=args.weight_type,
-        k=args.rank_weight_k,
-        r=args.retraining_frequency,
-        predict_target=args.predict_target,
-        latent_dim=args.latent_dim,
-        hdims=args.target_predictor_hdims,
-        metric_loss=args.metric_loss,
-        metric_loss_kw=args.metric_loss_kw,
-        input_wp=args.input_wp,
-        seed=args.seed,
-        random_search_type=args.random_search_type,
-        beta_metric_loss=args.beta_metric_loss,
-        beta_target_pred_loss=args.beta_target_pred_loss,
-        beta_kl_final=args.beta_final,
-        use_pretrained=args.use_pretrained,
-        n_init_retrain_epochs=args.n_init_retrain_epochs,
-        semi_supervised=args.semi_supervised,
-        n_init_bo_points=args.n_init_bo_points,
-        pretrained_model_id=args.pretrained_model_id,
-        batch_size=args.batch_size,
-        acq_func_id=args.acq_func_id,
-        acq_func_kwargs=args.acq_func_kwargs,
-    )
+    result_path = "results_triplet_og_run"
+    # os.path.join puts slash between two paths automatically
+    result_dir = os.path.join(result_path, f'seed{args.seed}')
+    # result_dir = get_path(
+    #     lso_strategy=args.lso_strategy,
+    #     weight_type=args.weight_type,
+    #     k=args.rank_weight_k,
+    #     r=args.retraining_frequency,
+        # predict_target=args.predict_target,
+        # latent_dim=args.latent_dim,
+        # hdims=args.target_predictor_hdims,
+        # metric_loss=args.metric_loss,
+        # metric_loss_kw=args.metric_loss_kw,
+        # input_wp=args.input_wp,
+        # seed=args.seed,
+        # random_search_type=args.random_search_type,
+        # beta_metric_loss=args.beta_metric_loss,
+    #     beta_target_pred_loss=args.beta_target_pred_loss,
+    #     beta_kl_final=args.beta_final,
+    #     use_pretrained=args.use_pretrained,
+    #     n_init_retrain_epochs=args.n_init_retrain_epochs,
+    #     semi_supervised=args.semi_supervised,
+    #     n_init_bo_points=args.n_init_bo_points,
+    #     pretrained_model_id=args.pretrained_model_id,
+    #     batch_size=args.batch_size,
+    #     acq_func_id=args.acq_func_id,
+    #     acq_func_kwargs=args.acq_func_kwargs,
+    # )
     print(f'result dir: {result_dir}')
     os.makedirs(result_dir, exist_ok=True)
     save_w_pickle(args, result_dir, 'args.pkl')
@@ -577,6 +586,15 @@ def main_aux(args, result_dir: str):
                 ckpt['hyper_parameters']['hparams'].target_predictor_hdims = args.target_predictor_hdims
                 torch.save(ckpt, args.pretrained_model_file)
         print(os.path.abspath(args.pretrained_model_file))
+        print("             X")
+        print("             X")
+        print("             X")
+        print("             X")
+        print("   Pretrained model file:", args.pretrained_model_file)
+        print("             X")
+        print("             X")
+        print("             X")
+        print("             X")
         vae: JTVAE = JTVAE.load_from_checkpoint(args.pretrained_model_file, vocab=datamodule.vocab)
         vae.beta = vae.hparams.beta_final  # Override any beta annealing
         vae.metric_loss = args.metric_loss
@@ -596,6 +614,10 @@ def main_aux(args, result_dir: str):
             vae.hparams.predict_target = args.predict_target
             vae.build_target_predictor()
     else:
+        print("             XX")
+        print("             XX")
+        print("             XX")
+        print("             XX")
         print("initialising VAE from scratch !")
         vae: JTVAE = JTVAE(hparams=args, vocab=datamodule.vocab)
     vae.eval()
@@ -712,6 +734,9 @@ def main_aux(args, result_dir: str):
                     best_ckpt_path=args.save_model_path
                 )
                 vae.eval()
+                # so if we're just initially retraining vanilla guy to
+                # save our first chem_triplet guy, we stop here 
+                # and return! Otherwise we continue to BO loop!  
                 if args.train_only:
                     return
             del num_epochs

@@ -79,10 +79,14 @@ class JTNNVAE(nn.Module):
 
         # Do the encoding
         tree_vecs, mol_vecs = self.encode_from_smiles(smiles_list)
+        # print("tree vecs", tree_vecs.shape) # 1x450
+        # print("mol vecs", mol_vecs.shape) # 1x450 
 
         # Random sampling
-        z_tree_vecs, _ = self.rsample(tree_vecs, self.T_mean, self.T_var)
+        z_tree_vecs, _ = self.rsample(tree_vecs, self.T_mean, self.T_var) # 
+        # print("z tree vecs", z_tree_vecs.shape) # 1x28
         z_mol_vecs, _ = self.rsample(mol_vecs, self.G_mean, self.G_var)
+        # print("z mol vecs", z_mol_vecs.shape) # 1x28 
 
         # Return decoded smiles
         return self.decode(z_tree_vecs, z_mol_vecs, prob_decode)

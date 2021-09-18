@@ -93,6 +93,8 @@ class TripletLossTorch:
         assert eta is None or eta > 0, eta
         self.eta = eta
 
+    # this is what's called ot ocmpute triplet loss 
+    # z_vectors = embs, ys = logps associated
     def build_loss_matrix(self, embs: Tensor, ys: Tensor):
         lpembdist = distances.LpDistance(normalize_embeddings=False, p=2, power=1)
         emb_distance_matrix = lpembdist(embs)
@@ -106,15 +108,32 @@ class TripletLossTorch:
         loss_loop = 0 * torch.tensor([0.], requires_grad=True).to(embs)
         n_positive_triplets = 0
         for i in range(embs.size(0)):
+            # for each z_vector i 
+            # pos_i is list of distances to other z's in batch that have similar scores (<= thresh)
+                #want small pos_i
             pos_i = positive_embs[i][positive_embs[i] > 0]
+            # neg_i is list of distances to other z's in batch that have dissimilar scores (> thresh)
+                #want big neg_i
             neg_i = negative_embs[i][negative_embs[i] > 0]
+
+            # so pos_i and -neg_i are loss terms we want to minimize!
+            # paris is all possible pairs of those loss terms:
             pairs = torch.cartesian_prod(pos_i, -neg_i)
+
+            # soften for numerical reasons i think... ?
             if self.soft:
+                # softplus approx to relu! 
                 triplet_losses_for_anchor_i = torch.nn.functional.softplus(pairs.sum(dim=-1))
                 if self.eta is not None:
                     # get the corresponding delta ys
+
+                    # list of diffs btwn score for z_i and each otehr z score,
+                        # that are small/ close (diffs < thres )
+                    # all score diffs < thresh for z_i
                     pos_y_i = y_distance_matrix[i][positive_embs[i] > 0]
+                    # all score diffs > thresh for z_i
                     neg_y_i = y_distance_matrix[i][negative_embs[i] > 0]
+                    # cartesian prod --> pairs of all big and small score diffs 
                     pairs_y = torch.cartesian_prod(pos_y_i, neg_y_i)
                     assert pairs.shape == pairs_y.shape, (pairs_y.shape, pairs.shape)
                     triplet_losses_for_anchor_i = triplet_losses_for_anchor_i * \
@@ -122,8 +141,47 @@ class TripletLossTorch:
                                                       .div(self.smooth_indicator(self.threshold)) \
                                                   * self.smooth_indicator(pairs_y[:, 1] - self.threshold) \
                                                       .div(self.smooth_indicator(1 - self.threshold))
+            # smooth_indicator(x) = np.tanh(x / (2 * self.eta))
+            # reg_thing *  (thresh - small_score_diffs)/thresh  *  (big_score_diffs - thresh)/thresh
+            # IN PAPER this is: 
+            # reg_thing * wp * wn !!! 
+            # wp = (thresh - small_score_diffs)/thresh ~ (thresh - small_score_diffs)
+                # Increases loss term as distance between scores we're calling "close" decreases
+
+            # wn = (big_score_diffs - thresh)/thresh ~ (big_score_diffs - thresh)
+                # Increases loss term as dist btwn func values we're calling "far" increases 
+            
+            
+            # in general wp, wn make it somewhat smoother function/ scale for distances 
+
             else:
+                print("     self.margin: ", self.margin)
+                # self.marge is None!! Causing error  
+                print("     pairs: ", pairs)
+                # some matrix 
+                # here we take paris.sum(dim = -1)
+                # so we sum each pair (pos_i, -neg_i) in pairs matrix (cartesiaon product)
+                # So paris.sum(dim=-1) gives us a vector of numbers of z_vector_i, 
+                # each number being a loss term equal to one of the (pos_i - neg_i )
+                # then we add to self.margin, some constant, and pass through relu 
+                # so all negative loss terms become zero 
                 triplet_losses_for_anchor_i = torch.relu(self.margin + pairs.sum(dim=-1))
+            
+            # then, 
+            # 1. to get final Nloss for vec_i, we literally just count number of these loss 
+            # terms that are positive = (triplet_losses_for_anchor_i > 0).sum()
+            # and 
+            # 2. to get the final TotLoss for vec_i, we
+            # also take the sum of all the loss terms (which are all pos or 0 b/c relu)
+            #
+            # then
+            # we add up Nlosses and Tlosses for each vec_i 
+            # to get final Nloss (n_positive_triplets) and Totloss(loss_loop)
+            # finally
+            # the final triplet loss for entire batch is the loss_loop (TotLoss), 
+            # divided by the Nlosses 
+            # so overall
+            # so it's the average value of all the (pos_i - neg_i)s overall all vectors in batch!!! 
             n_positive_triplets += (triplet_losses_for_anchor_i > 0).sum()
             loss_loop += triplet_losses_for_anchor_i.sum()
         loss_loop = loss_loop.div(max(1, n_positive_triplets))

@@ -240,7 +240,8 @@ def robust_multi_restart_optimizer(
         if result_is_good:
             num_good_results += 1
             if (num_good_results >= num_pts_to_return) and early_stop:
-                logger.info(f"Early stopping since {num_good_results} good points found.")
+                if logger is not None:
+                    logger.info(f"Early stopping since {num_good_results} good points found.")
                 break
 
     # Potentially directly return optimization results
@@ -371,7 +372,7 @@ def gp_opt(gp_file, data_file, save_file, n_out, logfile,
         num_good_starts=n_starts - n_starts // 2,
         good_point_cutoff=good_point_cutoff,
         bounds_abs=data_bounds,
-        logger=LOGGER,
+        # logger=LOGGER, # None by default.. should remove error
         early_stop=early_stopping,
         use_tqdm=True
     )

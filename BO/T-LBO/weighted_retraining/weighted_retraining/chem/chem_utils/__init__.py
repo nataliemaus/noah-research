@@ -43,7 +43,13 @@ def standardize_smiles(smiles):
 
 def penalized_logP(smiles: str, min_score=-float("inf")) -> float:
     """ calculate penalized logP for a given smiles string """
+    if smiles is None:
+        print("not a smile")
+        return None
     mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        print("invalid mol")
+        return None
     logp = Crippen.MolLogP(mol)
     sa = SA(mol)
 

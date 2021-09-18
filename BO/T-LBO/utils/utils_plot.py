@@ -155,15 +155,51 @@ def plot_results(path_to_res, maximisation: bool, n_acqs: Optional[int] = None, 
     Returns:
 
     """
+    # hack2: 
+    path_to_res = "results_triplet"
     results: List[np.array] = []
     if seeds is not None:
         paths: List[str] = [os.path.join(path_to_res, f"seed{i}") for i in seeds]
     else:
         paths: List[str] = glob.glob(path_to_res + '/seed*')
 
+    # hack: 
+    # paths = ["results_triplet"] 
+    
+    # print("    paths", paths) # empty list 
     for path_to_res in paths:
         path = os.path.join(path_to_res, 'results.npz')
+        # print("path:", path)
+            # path: results_triplet/results.npz
         result = np.load(path, allow_pickle=True)
+        # print("result", result)
+            # result <numpy.lib.npyio.NpzFile object at 0x7f15a2bdcca0>
+        # print(result.files)
+            # ['opt_points', 'opt_point_properties', 'opt_model_version', 
+            # 'params', 'sample_points', 'sample_versions', 'sample_properties']
+        
+        # print("shapes:")
+        # print('opt_points', result['opt_points'].shape) # 500 ... LOG P!  
+        # print('opt_point_properties', result['opt_point_properties'].shape) # 500... SMILE STRING! 
+        # print('opt_model_version', result['opt_model_version'].shape) # 500 ... ints 0 - 9 representing model verison
+            # input parameters (ie no target prediciton, ei, etc.)
+        
+        # EMPTY LISTS: 
+            # print('sample_points', result['sample_points']) 
+            # print('sample_versions', result['sample_versions']) 
+            # print('sample_properties', result['sample_properties']) 
+        print("")
+        print("path", path_to_res)
+        print("Best Penalized Log P:")
+        print(np.max(result['opt_point_properties'])) 
+        print("Best Mol:")
+        idx_best = np.argmax(result['opt_point_properties']) 
+        print(result['opt_points'][idx_best]) 
+        print("Best Model Version:", result['opt_model_version'][idx_best])
+        print("possible model verisons: ", np.unique(result['opt_model_version']) )# ,result['opt_model_version'].max )
+        print('params', result['params'])  
+        
+
         results.append(result['opt_point_properties'][:n_acqs])
 
     if maximisation:
