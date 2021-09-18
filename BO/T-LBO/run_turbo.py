@@ -88,7 +88,7 @@ if use_vanilla_train_data:
     which_encoder = "vanilla"
 else: 
     which_encoder = "trip1"
-    train_data_folder = 'train_data/'
+    train_data_folder = 'train_data_trip1/'
 path_to_train_z = train_data_folder + 'train_z.csv'
 train_z= pd.read_csv(path_to_train_z, header=None).to_numpy().squeeze()
 init_len_train_z = train_z.shape[0]

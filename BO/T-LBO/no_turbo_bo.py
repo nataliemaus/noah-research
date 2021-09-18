@@ -52,7 +52,7 @@ debug_mode = False
 verbose = False
 optim = "adam"
 # load data train z
-path_to_train_z = 'train_data/train_z.csv'
+path_to_train_z = 'train_data_trip1/train_z.csv'
 if use_vanilla_train_data: 
     path_to_train_z = 'train_data_vanilla/train_z.csv'
 train_z= pd.read_csv(path_to_train_z, header=None).to_numpy().squeeze()
@@ -61,7 +61,7 @@ train_z = torch.from_numpy(train_z).float()
 print("init_len_train_z", init_len_train_z)
 # print("train z shape", train_z.shape) # train z shape torch.Size([218969, 56])
 # Load data train y
-data_folder = 'train_data/'
+data_folder = 'train_data_trip1/'
 if use_vanilla_train_data: 
     data_folder = 'train_data_vanilla/'
 if which_train_y == "dec": 
