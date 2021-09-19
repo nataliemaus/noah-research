@@ -14,28 +14,17 @@ import sys
 rdkit_quiet()
 
 # NOTE: CURRENTLY RUNNING: # tmux attach -t setup , setup2, ... 
-# 1. 
-# BO w/ "reg" and init_trip
-# (same as run 1. but also now w/ new implemenation of faillures so don't set logP ==0 for invalid mols )
 # 2. 
 # create y_dec trip1!!!!
-# 3. 
-# BO w/ "reg" and vanilla, 34! --> verification :) 
 # 4. 
 # BO w/ "reg" and vanilla (wandb track!, now at 41!!!!)
 # 5. 
 # BO w/ "reg" and vanilla (wandb tracking table of SMILES for best! )
-# #check on setup5 to make sure we start printing "logging new best smile"! (after 4.9ish/init_max)
 # 6.
 # BO w/ "reg", vanilla, and VANILLA ENC DATA!
 
 
 #NOTE: RAN:
-# 1. 
-# BO with chem_triplet/chem.ckpt model and "reg" data
-# 219422) Best value: 1.47e+01, TR length: 6.25e-03
-    # I want to re run with new implementaiton of BO though!!! 
-
 # 2. 
 # BO with best_model.ckpt model and "reg" data
 # 219498) Best value: 14.693258285522461, TR length: 1.25e-02
@@ -43,9 +32,7 @@ rdkit_quiet()
 # 219500) Best value: 14.693258285522461, TR length: 6.25e-03
 
 # 3. 
-# tmux attach -t setup6
-# saving new vanilla vae train data! 
-# train_data_vanilla
+# BO w/ "reg" and vanilla, 34! --> verification :). (I killed early )
 
 # export CUDA_VISIBLE_DEVICES=1
 torch.cuda.set_device(0)
@@ -57,7 +44,7 @@ use_vanilla_train_data = True  #ENCODER True --> vanilla encoder created data!
 which_jtvae = "vanilla" #DECODER "vanilla", "trip1", "trip_best" (decoder in BO loop!)
 which_train_y = "reg"  #dec or reg, preferable dec once I can!
 num_epochs = 2  #num epochs to fit GP on each run ....
-samples_per_z = 40
+samples_per_z = 5
 
 project_nm = "turbo-mdn-jtvae" # "dumb" # "turbo-mdn-jtvae"
 # https://wandb.ai/nmaus/turbo-mdn-jtvae?workspace=user-nmaus
@@ -111,6 +98,7 @@ dim = train_z.size(-1)
 n_candidates = min(5000, max(2000, 200 * dim))
 num_restarts = 10
 raw_samples = 512
+verbose2 = False
 
 # get fine-tuned JTVAE model 
 path_to_vanilla= "weighted_retraining/assets/pretrained_models/chem_vanilla/chem.ckpt" 
@@ -154,7 +142,7 @@ def latent_z_to_max_logP(z_vectors, samps_per_z = samples_per_z):
                 if failures > (samps_per_z - 10):
                     print('ULTIMATE FAILURE, NO VALID SMILES')
                     total_ultimate_fails += 1
-                    return None
+                    return None, None
         logPs = np.array(logPs)
         all_smiles_per_sample = np.array(reconstructed_smiles)
         all_smiles_arrays.append(all_smiles_per_sample)
@@ -199,17 +187,8 @@ if track_run:
         "raw_samples": raw_samples,"samples_per_z":samples_per_z,
         "n_candidates": n_candidates,"path_to_jtvae_used":path_to_vae,})
     
-    cols = ["logPs", "smiles"]
-    smiles_table = wandb.Table(columns=cols)
-
-    # smiles_table.add_data(12.7, "jlsjdkfoewj" ) 
-    # list = ['N#C[SH]12(C=CC(c3cccc4sc5sc(Sc6cccc7cc(-c8csc([SH]9C=Cc%10ccc%11sccc%11c%109)c8)sc67)cc5c34)=C1)C=Cc1sc3sc4ccc(-c5csc6cc(Sc7cc8c(-c9csc%10c9sc9c%11cccc(-c%12ccc(-c%13ccc%14sc([SH]%15C=Cc%16c%15ccc%15ccc%17sccc%17c%16%15)cc%14c%13)cc%12)c%11ccc%109)csc8s7)ccc56)cc4c3c12']
-    # smiles_table.add_data(12.5, list[0] ) 
-    # list = [r'N#C[SH]12(C=CC(c3cccc4sc5sc(Sc6cccc7cc(-c8csc([SH]9C=Cc%10ccc%11sccc%11c%109)c8)sc67)cc5c34)=C1)C=Cc1sc3sc4ccc(-c5csc6cc(Sc7cc8c(-c9csc%10c9sc9c%11cccc(-c%12ccc(-c%13ccc%14sc([SH]%15C=Cc%16c%15ccc%15ccc%17sccc%17c%16%15)cc%14c%13)cc%12)c%11ccc%109)csc8s7)ccc56)cc4c3c12']
-    # smiles_table.add_data(13.5, list[0] ) 
-    # tracker.log({"smiles_table":smiles_table})
-    # tracker.finish()
-    # sys.exit()
+    # cols = ["logPs", "smiles"]
+    # smiles_table = wandb.Table(columns=cols)
 
 best_logP_seen = -10000000     # init_max, # WAS init_max for setup5 run... so won't log smiles strings still after 4ish... 
 while not state.restart_triggered:
@@ -254,15 +233,14 @@ while not state.restart_triggered:
     y_next, from_smiles = latent_z_to_max_logP(z_next)
     if y_next is not None:
         i = 0
-        verbose2 = True
         for logP_val in y_next: 
             if verbose2:
                 print("y_next", logP_val.item(), "form smiles", from_smiles[0][i])
             if track_run and (logP_val.item() >= best_logP_seen): 
-                print("logging new best smile:")
-                print("y_next", logP_val.item(), "form smiles", str(from_smiles[0][i])) 
+                # print("logging new best smile:")
+                print("NEW BEST", logP_val.item(), "FROM SMILE", from_smiles[0][i]) 
                 best_logP_seen = logP_val.item() #update best
-                smiles_table.add_data(logP_val.item(), str(from_smiles[0][i]) )
+                # smiles_table.add_data(logP_val.item(), str(from_smiles[0][i]) )
             i += 1
 
 
@@ -275,14 +253,13 @@ while not state.restart_triggered:
 
 
     # Print current status
-    print(
-        f"{len(train_z)}) Best value: {state.best_value}, TR length: {state.length:.2e}"
-    )
+    if verbose2: 
+        print( f"{len(train_z)}) Best value: {state.best_value}, TR length: {state.length:.2e}")
     if track_run: 
         tracker.log({"train_z_size":len(train_z), "Best_val": state.best_value, "TR_length":state.length, "n_func_evals":len(train_z) - init_len_train_z}) 
 
 if track_run:
     tracker.log({"total_ultimate_fails":total_ultimate_fails})
-    tracker.log({"smiles_table":smiles_table})
+    # tracker.log({"smiles_table":smiles_table})
     tracker.finish()
 print("path to VAE used:", path_to_vae)
