@@ -56,7 +56,7 @@ data_folder = 'train_data_trip1/'
 if use_vanilla_train_data: 
     data_folder = 'train_data_vanilla/'
 # load data train z
-path_to_train_z1 =  data_folder + 'train_z.csv'
+path_to_train_z1 =  data_folder + 'train_z_pt1.csv'
 path_to_train_z2 =  data_folder + 'train_z2.csv'
 train_z1 = pd.read_csv(path_to_train_z1, header=None).to_numpy().squeeze()
 train_z1 = torch.from_numpy(train_z1).float()

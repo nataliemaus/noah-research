@@ -86,7 +86,7 @@ else:
     which_encoder = "trip1"
     train_data_folder = 'train_data_trip1/'
 
-path_to_train_z1 =  train_data_folder + 'train_z.csv'
+path_to_train_z1 =  train_data_folder + 'train_z_pt1.csv'
 path_to_train_z2 =  train_data_folder + 'train_z2.csv'
 train_z1 = pd.read_csv(path_to_train_z1, header=None).to_numpy().squeeze()
 train_z1 = torch.from_numpy(train_z1).float()

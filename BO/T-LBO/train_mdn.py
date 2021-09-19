@@ -15,7 +15,7 @@ if which_encoder == "vanilla":
     data_file = 'train_data_vanilla/'
 elif which_encoder == "trip1":
     data_file = 'train_data_trip1/'
-path_to_train_z1 =  data_file + 'train_z.csv'
+path_to_train_z1 =  data_file + 'train_z_pt1.csv'
 path_to_train_z2 =  data_file + 'train_z2.csv'
 train_z1 = pd.read_csv(path_to_train_z1, header=None).to_numpy().squeeze()
 train_z1 = torch.from_numpy(train_z1).float()
