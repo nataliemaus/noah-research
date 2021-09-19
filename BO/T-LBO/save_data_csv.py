@@ -14,11 +14,11 @@ vocab_file = "weighted_retraining/data/chem/zinc/orig_model/vocab.txt"
 with open(vocab_file) as f:
     vcb= Vocab([x.strip() for x in f.readlines()])
 model: JTVAE = JTVAE.load_from_checkpoint(path_to_model, vocab=vcb)
-make_y_dec = False 
+make_y_dec = True
 
 if make_y_dec: 
     # Get y_dec (logPs from decoded z_vecs)
-    def latent_z_to_max_logP(z_vectors, samps_per_z = 40):
+    def latent_z_to_max_logP(z_vectors, samps_per_z = 20):
         z_tree_vecs = torch.tensor(z_vectors[:,0:28]).float()
         # print("tree vecs shape",z_tree_vecs.shape ) tree vecs shape (218969, 28)
         z_mol_vecs = torch.tensor(z_vectors[:,28:56]).float()
@@ -49,12 +49,30 @@ if make_y_dec:
 
     path_to_train_z = 'train_data_trip1/train_z.csv'
     train_z= pd.read_csv(path_to_train_z, header=None).to_numpy().squeeze()
-    # train_z = train_z[0:3]
     print("train z shape", train_z.shape) # train z shape (218969, 56)
-    max_LOGPS = latent_z_to_max_logP(train_z)
-    num_zeros = max_LOGPS[np.where(max_LOGPS == 0)].size
+    print("length of trainz:", len(train_z)) # length of trainz: 218969
+    # train_z = train_z[0:3]
+    #batchify: 
+    train_y_dec_list = []
+    bsz = 10000
+    step = bsz
+    for i in range(0, len(train_z), step):
+        start = i
+        stop = i + bsz 
+        if stop > len(train_z):
+            stop = len(train_z)
+        print(f"from {start} to {(stop)} out of {len(train_z)}")
+        train_y = latent_z_to_max_logP(train_z[start:stop])
+        train_y = torch.tensor(train_y).float().detach()
+        print("train y dec shape", train_y.shape)
+        train_y_dec_list.append(train_y)
+
+    print("aight")
+    train_y = torch.cat(train_y_dec_list).detach().numpy()
+    # max_LOGPS = latent_z_to_max_logP(train_z)
+    num_zeros = train_y[np.where(train_y == 0)].size
     print(f"Number of zeros (implying faiulre to generate valid mol): {num_zeros}")
-    y_df = pd.DataFrame(max_LOGPS)
+    y_df = pd.DataFrame(train_y)
     y_df.to_csv('train_data_trip1/train_y_dec.csv', header=None, index = None)
     sys.exit()
 

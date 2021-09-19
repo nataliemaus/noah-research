@@ -13,25 +13,21 @@ from weighted_retraining.weighted_retraining.chem.jtnn import Vocab
 import sys
 rdkit_quiet()
 
-# NOTE: CURRENTLY RUNNING: 
+# NOTE: CURRENTLY RUNNING: # tmux attach -t setup , setup2, ... 
 # 1. 
-# tmux attach -t setup 
-# BO w/ "reg" and init_trip 
+# BO w/ "reg" and init_trip
 # (same as run 1. but also now w/ new implemenation of faillures so don't set logP ==0 for invalid mols )
 # 2. 
-# remaking triplet encoder dataset ughhh (train_data_trip1)
-# 
+# create y_dec trip1!!!!
 # 3. 
 # BO w/ "reg" and vanilla, 34! --> verification :) 
 # 4. 
 # BO w/ "reg" and vanilla (wandb track!, now at 41!!!!)
 # 5. 
 # BO w/ "reg" and vanilla (wandb tracking table of SMILES for best! )
-        # #check on setup5 to make sure we start printing "logging new best smile"! (after 4.9ish/init_max)
-#6.
-# BO w/ "reg" and vanilla, VANILLA ENCODER/DATA!
-#7.
-# Remaking vinilla enc dataset ughhh 
+# #check on setup5 to make sure we start printing "logging new best smile"! (after 4.9ish/init_max)
+# 6.
+# BO w/ "reg", vanilla, and VANILLA ENC DATA!
 
 
 #NOTE: RAN:
@@ -60,10 +56,10 @@ track_run = True
 use_vanilla_train_data = True  #ENCODER True --> vanilla encoder created data!
 which_jtvae = "vanilla" #DECODER "vanilla", "trip1", "trip_best" (decoder in BO loop!)
 which_train_y = "reg"  #dec or reg, preferable dec once I can!
-num_epochs = 2  #num epochs to fit GP on each run .... 
+num_epochs = 2  #num epochs to fit GP on each run ....
 samples_per_z = 40
 
-project_nm = "turbo-mdn-jtvae"
+project_nm = "turbo-mdn-jtvae" # "dumb" # "turbo-mdn-jtvae"
 # https://wandb.ai/nmaus/turbo-mdn-jtvae?workspace=user-nmaus
 
 learning_rte = 0.001
@@ -89,12 +85,17 @@ if use_vanilla_train_data:
 else: 
     which_encoder = "trip1"
     train_data_folder = 'train_data_trip1/'
-path_to_train_z = train_data_folder + 'train_z.csv'
-train_z= pd.read_csv(path_to_train_z, header=None).to_numpy().squeeze()
+
+path_to_train_z1 =  train_data_folder + 'train_z.csv'
+path_to_train_z2 =  train_data_folder + 'train_z2.csv'
+train_z1 = pd.read_csv(path_to_train_z1, header=None).to_numpy().squeeze()
+train_z1 = torch.from_numpy(train_z1).float()
+train_z2 = pd.read_csv(path_to_train_z2, header=None).to_numpy().squeeze()
+train_z2 = torch.from_numpy(train_z2).float()
+train_z = torch.cat([train_z1,train_z2])
+# train_z= pd.read_csv(path_to_train_z, header=None).to_numpy().squeeze()
 init_len_train_z = train_z.shape[0]
-train_z = torch.from_numpy(train_z).float()
-print("init_len_train_z", init_len_train_z)
-# print("train z shape", train_z.shape) # train z shape torch.Size([218969, 56])
+print("train z shape", train_z.shape) # train z shape torch.Size([218969, 56])
 if which_train_y == "dec": 
     path_to_train_y = train_data_folder + 'train_y_dec.csv'
 elif which_train_y == "reg":
@@ -201,6 +202,15 @@ if track_run:
     cols = ["logPs", "smiles"]
     smiles_table = wandb.Table(columns=cols)
 
+    # smiles_table.add_data(12.7, "jlsjdkfoewj" ) 
+    # list = ['N#C[SH]12(C=CC(c3cccc4sc5sc(Sc6cccc7cc(-c8csc([SH]9C=Cc%10ccc%11sccc%11c%109)c8)sc67)cc5c34)=C1)C=Cc1sc3sc4ccc(-c5csc6cc(Sc7cc8c(-c9csc%10c9sc9c%11cccc(-c%12ccc(-c%13ccc%14sc([SH]%15C=Cc%16c%15ccc%15ccc%17sccc%17c%16%15)cc%14c%13)cc%12)c%11ccc%109)csc8s7)ccc56)cc4c3c12']
+    # smiles_table.add_data(12.5, list[0] ) 
+    # list = [r'N#C[SH]12(C=CC(c3cccc4sc5sc(Sc6cccc7cc(-c8csc([SH]9C=Cc%10ccc%11sccc%11c%109)c8)sc67)cc5c34)=C1)C=Cc1sc3sc4ccc(-c5csc6cc(Sc7cc8c(-c9csc%10c9sc9c%11cccc(-c%12ccc(-c%13ccc%14sc([SH]%15C=Cc%16c%15ccc%15ccc%17sccc%17c%16%15)cc%14c%13)cc%12)c%11ccc%109)csc8s7)ccc56)cc4c3c12']
+    # smiles_table.add_data(13.5, list[0] ) 
+    # tracker.log({"smiles_table":smiles_table})
+    # tracker.finish()
+    # sys.exit()
+
 best_logP_seen = -10000000     # init_max, # WAS init_max for setup5 run... so won't log smiles strings still after 4ish... 
 while not state.restart_triggered:
     # Train a GP
@@ -250,9 +260,9 @@ while not state.restart_triggered:
                 print("y_next", logP_val.item(), "form smiles", from_smiles[0][i])
             if track_run and (logP_val.item() >= best_logP_seen): 
                 print("logging new best smile:")
-                print("y_next", logP_val.item(), "form smiles", from_smiles[0][i])
+                print("y_next", logP_val.item(), "form smiles", str(from_smiles[0][i])) 
                 best_logP_seen = logP_val.item() #update best
-                smiles_table.add_data(logP_val.item(), from_smiles[0][i] )
+                smiles_table.add_data(logP_val.item(), str(from_smiles[0][i]) )
             i += 1
 
 

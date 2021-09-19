@@ -51,19 +51,22 @@ elif model_type == "GP":
 debug_mode = False
 verbose = False
 optim = "adam"
-# load data train z
-path_to_train_z = 'train_data_trip1/train_z.csv'
-if use_vanilla_train_data: 
-    path_to_train_z = 'train_data_vanilla/train_z.csv'
-train_z= pd.read_csv(path_to_train_z, header=None).to_numpy().squeeze()
-init_len_train_z = train_z.shape[0]
-train_z = torch.from_numpy(train_z).float()
-print("init_len_train_z", init_len_train_z)
-# print("train z shape", train_z.shape) # train z shape torch.Size([218969, 56])
-# Load data train y
+
 data_folder = 'train_data_trip1/'
 if use_vanilla_train_data: 
     data_folder = 'train_data_vanilla/'
+# load data train z
+path_to_train_z1 =  data_folder + 'train_z.csv'
+path_to_train_z2 =  data_folder + 'train_z2.csv'
+train_z1 = pd.read_csv(path_to_train_z1, header=None).to_numpy().squeeze()
+train_z1 = torch.from_numpy(train_z1).float()
+train_z2 = pd.read_csv(path_to_train_z2, header=None).to_numpy().squeeze()
+train_z2 = torch.from_numpy(train_z2).float()
+train_z = torch.cat([train_z1,train_z2])
+init_len_train_z = train_z.shape[0]
+print("init_len_train_z", init_len_train_z)
+# print("train z shape", train_z.shape) # train z shape torch.Size([218969, 56])
+# Load data train y
 if which_train_y == "dec": 
     path_to_train_y = data_folder + 'train_y_dec.csv'
 elif which_train_y == "reg":

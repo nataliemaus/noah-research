@@ -9,15 +9,21 @@ from weighted_retraining.weighted_retraining.chem.chem_utils import rdkit_quiet,
 rdkit_quiet()
 
 which_train_y = "reg"  #dec or reg
-which_encoder = "vanilla" # "trip1"
+which_encoder = "trip1" # "vanilla" # "trip1"
 
 if which_encoder == "vanilla":
     data_file = 'train_data_vanilla/'
 elif which_encoder == "trip1":
     data_file = 'train_data_trip1/'
-path_to_train_z =  data_file + 'train_z.csv'
-train_z= pd.read_csv(path_to_train_z, header=None).to_numpy().squeeze()
-train_z = torch.from_numpy(train_z).float()
+path_to_train_z1 =  data_file + 'train_z.csv'
+path_to_train_z2 =  data_file + 'train_z2.csv'
+train_z1 = pd.read_csv(path_to_train_z1, header=None).to_numpy().squeeze()
+train_z1 = torch.from_numpy(train_z1).float()
+train_z2 = pd.read_csv(path_to_train_z2, header=None).to_numpy().squeeze()
+train_z2 = torch.from_numpy(train_z2).float()
+train_z = torch.cat([train_z1,train_z2])
+
+## train_z = torch.from_numpy(train_z).float()
 # print("train z shape", train_z.shape) # train z shape torch.Size([218969, 56])
 if which_train_y == "dec":
     path_to_train_y = data_file + 'train_y_dec.csv'
