@@ -11,6 +11,8 @@ from numpy import exp, sin
 from torch import Tensor
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
+import csv
+from csv import writer
 
 from weighted_retraining.weighted_retraining.expr.equation_vae import EquationGrammarModelTorch
 from weighted_retraining.weighted_retraining.utils import print_flush
@@ -187,7 +189,37 @@ def score_function(inputs, target_eq='1 / 3 + x + sin( x * x )', worst=7.0) -> n
         except:
             scores.append(worst)
 
-    return np.array(scores)
+    scores = np.array(scores)
+    print('SCORES ARRAY:', scores)
+    # my code:
+    best_score = np.min(scores)
+    num_evals = len(scores)
+    print(f'best_score:{best_score}, num_evals:{num_evals}')
+    # with open('true_expr_results.csv', 'w', newline='') as csvfile:
+    #     spamwriter = csv.writer(csvfile, delimiter=' ',
+    #                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    #     spamwriter.writerow([str(num_evals), str(best_score)])
+
+
+    # List 
+    List=[str(num_evals), str(best_score)]
+  
+    # Open our existing CSV file in append mode
+    # Create a file object for this file
+    with open('true_expr_results.csv', 'a') as f_object:
+    
+        # Pass this file object to csv.writer()
+        # and get a writer object
+        writer_object = writer(f_object)
+    
+        # Pass the list as an argument into
+        # the writerow()
+        writer_object.writerow(List)
+    
+        #Close the file object
+        f_object.close()
+    
+    return scores
 
 
 def get_latent_encodings(use_test_set, use_full_data_for_gp, model, data_file, data_scores, data_str,

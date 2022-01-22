@@ -1,46 +1,103 @@
 from utils.utils_plot import plot_results
 import matplotlib.pyplot as plt
 import torch 
-from weighted_retraining.weighted_retraining.chem.chem_model import JTVAE
-from weighted_retraining.weighted_retraining.chem.chem_utils import rdkit_quiet, standardize_smiles, penalized_logP, get_mol, QED_score
-from weighted_retraining.weighted_retraining.chem.jtnn import MolTreeFolder, MolTreeDataset, Vocab, MolTree
-from weighted_retraining.weighted_retraining.robust_opt_scripts.robust_opt_chem import _encode_mol_trees
-from weighted_retraining.weighted_retraining import utils
-from weighted_retraining.weighted_retraining.chem.chem_data import (
-    WeightedJTNNDataset, tensorize,
-    WeightedMolTreeFolder,
-    get_rec_x_error)
 import sys
-from weighted_retraining.weighted_retraining import utils
+# from weighted_retraining.weighted_retraining.chem.chem_model import JTVAE
+# from weighted_retraining.weighted_retraining.chem.chem_utils import rdkit_quiet, standardize_smiles, penalized_logP, get_mol, QED_score
+# from weighted_retraining.weighted_retraining.chem.jtnn import MolTreeFolder, MolTreeDataset, Vocab, MolTree
+# from weighted_retraining.weighted_retraining.robust_opt_scripts.robust_opt_chem import _encode_mol_trees
+# from weighted_retraining.weighted_retraining import utils
+# from weighted_retraining.weighted_retraining.chem.chem_data import (
+#     WeightedJTNNDataset, tensorize,
+#     WeightedMolTreeFolder,
+#     get_rec_x_error)
+# from weighted_retraining.weighted_retraining import utils
 
 # tmux attach -t setup
 # conda activate lsbo_metric_env 
 
-import numpy as np
-rdkit_quiet()
+#MOSES: Chem.Crippen.MolLogP(mol)
 
+import numpy as np
+# rdkit_quiet()
+
+# string = 'CCCCCCCCCCCCCCCCCCCCCCCCCCC1CC1'
+# string = 'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC'
+# 43.9665526886463 FROM SMILE CCSSCSCCSCCSSCCSCCSSCCSSCCSSCCSSCSSSCCSSC
+# string = 'CCSSCSCCSCCSSCCSCCSSCCSSCCSSCCSSCSSSCCSSC' # CCSSCSCCSCCSSCCSCCSSCCSSCCSSCCSSCSSSCCSSC
+if False:
+    string = "SSSSSSSSSSSSSSSSSSSSSSCSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+    logP = penalized_logP(string)
+    print("final score:", logP)
+
+# log P raw 11.168799999999989
+# sa raw 1.690291797777654
+# cycle score raw 0
+
+# sys.exit()
+
+# from weighted_retraining.weighted_retraining.chem.chem_data import (
+#     WeightedJTNNDataset,
+#     WeightedMolTreeFolder,
+#     get_rec_x_error)
+
+# from weighted_retraining.weighted_retraining.chem.jtnn import MolTreeFolder, MolTreeDataset, Vocab, MolTree
+
+# datamodule = WeightedJTNNDataset(args, utils.DataWeighter(args))
+
+if False:
+    train_data_path="weighted_retraining/data/chem/zinc/orig_model/tensors_train" # /*.pkl
+    vocab_file = "weighted_retraining/data/chem/zinc/orig_model/vocab.txt"
+    with open(vocab_file) as f:
+        vcb= Vocab([x.strip() for x in f.readlines()])
+
+    folder = MolTreeFolder(train_data_path, vocab = vcb,
+                batch_size = 10,
+                num_workers=1,)
+
+    for batch in folder: 
+        # print(batch.shape) #tuble, no shape
+        # print(batch[0][0]) # data: LIST of mol tree objects
+        print(len(batch[0])) #data list of MolTreeObjs of length bsz = 10!!! 
+        print(type(batch[1][0])) # tuple
+        print(type(batch[2][0])) # tuple
+        # print(batch[1].shape) # dataset
+        # print(batch[2].shape) # dataloader
+        # (data, dataset, dataloader) = batch
+
+
+# sys.exit()
 # print(1.40e+01) # 14.0!!! yay! #
 
-path_to_vanilla_model  = "weighted_retraining/assets/pretrained_models/chem_vanilla/chem.ckpt" 
-vocab_file = "weighted_retraining/data/chem/zinc/orig_model/vocab.txt"
-with open(vocab_file) as f:
-    vcb= Vocab([x.strip() for x in f.readlines()])
-vae_vanilla: JTVAE = JTVAE.load_from_checkpoint(path_to_vanilla_model, vocab=vcb)
+if False:
+    path_to_vanilla_model  = "weighted_retraining/assets/pretrained_models/chem_vanilla/chem.ckpt" 
+    vocab_file = "weighted_retraining/data/chem/zinc/orig_model/vocab.txt"
+    with open(vocab_file) as f:
+        vcb= Vocab([x.strip() for x in f.readlines()])
+    vae_vanilla: JTVAE = JTVAE.load_from_checkpoint(path_to_vanilla_model, vocab=vcb)
 
-# vae_vanilla.decoder_loss()
+    # vae_vanilla.decoder_loss()
 
-logP = penalized_logP('CCCC')
-print(logP)
+    logP = penalized_logP('CCCC')
+    print(logP)
+
+    # sys.exit()
+
+deterministic = False
+plot = True
+if plot:
+    print('plotting')
+    # path_to_res, max = 'results_triplet', True # for logp
+    path_to_res, max = 'expr_results1', False # for expr
+    plot = plot_results(path_to_res, maximisation= max )
+    plt.savefig('results_expr1.png')
+    sys.exit()
 
 sys.exit()
 
-deterministic = False
-plot = False
-if plot:
-    path_to_res = 'results_triplet'
-    plot = plot_results(path_to_res, maximisation= True) 
-    plt.savefig('results_triplet.png')
-    sys.exit()
+######################  logp results:  ####################### 
+# results = pd.read_csv('logp_results_huawei.csv',header=None).values
+
 
 # RESULT: 
 # path results_triplet/seed0

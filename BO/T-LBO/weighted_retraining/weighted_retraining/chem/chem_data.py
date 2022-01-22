@@ -10,10 +10,12 @@ from torch import Tensor
 from torch.utils.data import DataLoader
 from tqdm import trange
 from tqdm.auto import tqdm
+import csv
+import pandas as pd
 
 import weighted_retraining.weighted_retraining.chem.jtnn.datautils as datautils
 from weighted_retraining.weighted_retraining.chem.chem_model import JTVAE
-from weighted_retraining.weighted_retraining.chem.chem_utils import standardize_smiles, penalized_logP, QED_score
+from weighted_retraining.weighted_retraining.chem.chem_utils import standardize_smiles, penalized_logP, QED_score, hardcoded_smile_to_guacamol, smiles_to_dock_3pbl
 from weighted_retraining.weighted_retraining.chem.jtnn import MolTreeFolder, MolTreeDataset, Vocab, MolTree
 from weighted_retraining.weighted_retraining.chem.jtnn.datautils import TargetMolTreeDataset
 from weighted_retraining.weighted_retraining.utils import print_flush
@@ -78,11 +80,20 @@ class WeightedMolTreeFolder(MolTreeFolder):
             indices = np.random.randint(0, len(self.data), n_init_points)
             self.data = [self.data[index] for index in indices]
 
+        print("PROPERTY:", prop)
+
         self.property = prop
         if self.property == "logP":
             self.prop_func = penalized_logP
         elif self.property == "QED":
             self.prop_func = QED_score
+        elif self.property == "dock_3pbl": # == drd3 ...  dock_3pbl"
+            self.prop_func = smiles_to_dock_3pbl
+        # assume gaucamol score
+        elif self.property in ["rano", "pdop", "siga", "zale"] :
+            print("setting up guacamol scoring function:", self.property)
+            self.prop_func = hardcoded_smile_to_guacamol # returns score and logs it in text file! 
+            #mself.prop_func = get_guacamol_score_func(self.property)
         else:
             raise NotImplementedError(self.property)
         self._set_data_properties(property_dict)
@@ -217,8 +228,10 @@ class WeightedJTNNDataset(pl.LightningDataModule):
         data_group.add_argument("--vocab_file", required=True)
         data_group.add_argument("--batch_size", type=int, default=32)
         data_group.add_argument(
-            "--property", type=str, choices=["logP", "QED"], default="logP"
+            "--property", type=str, choices=["logP", "QED", "zale", "siga", "rano", "pdop", "dock_3pbl"], default="dock_3pbl" # "rano" ...
         )
+        #     "--property", type=str, choices=["logP", "QED"], default="logP"
+        # )
         data_group.add_argument(
             "--property_file",
             type=str,
@@ -234,11 +247,16 @@ class WeightedJTNNDataset(pl.LightningDataModule):
             self.vocab = Vocab([x.strip() for x in f.readlines()])
 
         # Read in properties
-        if self.property_file is None:
-            property_dict = dict()
-        else:
-            with open(self.property_file, "rb") as f:
-                property_dict = pickle.load(f)
+        self.property_file = "train_ys_dock_3pbl.csv"
+        df = pd.read_csv(self.property_file)
+        print(df.keys())
+        property_dict = dict(zip(df.smile, df.docking_score))
+
+        # if self.property_file is None:  
+        #     property_dict = dict()
+        # else:
+        #     with open(self.property_file, "rb") as f:
+        #         property_dict = pickle.load(f) # this is a dictionary of smiles with corresponding socres!
 
         self.train_dataset = WeightedMolTreeFolder(
             self.property,

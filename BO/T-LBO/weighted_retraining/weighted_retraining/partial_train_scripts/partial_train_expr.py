@@ -47,7 +47,8 @@ def get_path(k, ignore_percentile, good_percentile, predict_target: bool, n_max_
     Returns:
         Path to result dir
     """
-    res_path = os.path.join(get_storage_root(), f'logs/train/expr/torch/expr-k-{k}')
+    #res_path = os.path.join(get_storage_root(), f'logs/train/expr/torch/expr-k-{k}')
+    res_path = f'results_expr/logs/train/expr/torch/expr-k-{k}' 
     exp_spec = f'ignore_perc-{ignore_percentile}_good_perc-{good_percentile}_epochs-{n_max_epochs}'
     if latent_dim != 25:
         exp_spec += f'_z-dim-{latent_dim}'
@@ -56,6 +57,7 @@ def get_path(k, ignore_percentile, good_percentile, predict_target: bool, n_max_
         exp_spec += '_predy-' + '-'.join(map(str, hdims))
         if beta_target_pred_loss != 1:
             exp_spec += f'-b-{float(beta_target_pred_loss):g}'
+    print("MTRIC LOSS SHOULD BE NONE:", metric_loss)
     if metric_loss is not None:
         exp_spec += '-' + METRIC_LOSSES[metric_loss]['exp_metric_id'](**metric_loss_kw)
         if beta_metric_loss != 1:

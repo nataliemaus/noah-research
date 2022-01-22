@@ -53,6 +53,9 @@ class JTNNDecoder(nn.Module):
 
         tree_contexts = x_tree_vecs.index_select(0, contexts)
         input_vec = torch.cat([hiddens, tree_contexts], dim=-1)
+        # self.W is a linear NN, so this is a forward pass of z through NN... 
+        # So they certainly don't decode it! But they do pass it through 
+        # so NN to get vector of how probable it is?
         output_vec = F.relu(V(input_vec))
         return V_o(output_vec)
 

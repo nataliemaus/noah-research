@@ -8,6 +8,8 @@ import time
 import traceback
 from pathlib import Path
 from typing import Dict, Any, Optional
+import sys
+sys.path.append("../")
 
 import numpy as np
 import pytorch_lightning as pl
@@ -27,7 +29,7 @@ from utils.utils_save import get_storage_root, save_w_pickle, str_dict
 from weighted_retraining.weighted_retraining.metrics import METRIC_LOSSES
 from weighted_retraining.weighted_retraining.robust_opt_scripts.base import add_common_args
 
-# My imports
+# My imports 
 from weighted_retraining.weighted_retraining import GP_TRAIN_FILE, GP_OPT_FILE
 from weighted_retraining.weighted_retraining.chem.chem_data import (
     WeightedJTNNDataset,
@@ -504,10 +506,11 @@ def main():
     # Seeding
     pl.seed_everything(args.seed)
 
-    # create result directory
-    result_path = "results_triplet_og_run"
-    # os.path.join puts slash between two paths automatically
+    # create result directory 
+    result_path = "abc_results" 
+    # os.path.join puts slash between two paths automatically 
     result_dir = os.path.join(result_path, f'seed{args.seed}')
+    
     # result_dir = get_path(
     #     lso_strategy=args.lso_strategy,
     #     weight_type=args.weight_type,

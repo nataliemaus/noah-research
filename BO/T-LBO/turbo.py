@@ -97,20 +97,15 @@ def generate_batch(
         sobol = SobolEngine(dim, scramble=True)
         pert = sobol.draw(n_candidates).to(dtype=dtype, device=device)
         pert = tr_lb + (tr_ub - tr_lb) * pert
-
-        # Create a perturbation mask
         prob_perturb = min(20.0 / dim, 1.0)
         mask = (
             torch.rand(n_candidates, dim, dtype=dtype, device=device)
-            <= prob_perturb
-        )
+            <= prob_perturb)
         ind = torch.where(mask.sum(dim=1) == 0)[0]
         mask[ind, torch.randint(0, dim - 1, size=(len(ind),), device=device)] = 1
-
         # Create candidate points from the perturbations and the mask
         X_cand = x_center.expand(n_candidates, dim).clone()
         X_cand[mask] = pert[mask]
-
         # Sample on the candidate points
         thompson_sampling = MaxPosteriorSampling(model=model, replacement=False)
         X_next = thompson_sampling(X_cand, num_samples=batch_size)
@@ -135,8 +130,7 @@ def generate_batch(
                 bounds=torch.stack([tr_lb, tr_ub]).cuda(),
                 q=batch_size,
                 num_restarts=num_restarts,
-                raw_samples=raw_samples,
-            )
+                raw_samples=raw_samples,)
             # optimize_acqf requires model to have a posterior...
             # works for mdn until rsample() fails to produce tensor...
     # print("X_next", X_next) # 1x128, and normal looking numbers... as expected 

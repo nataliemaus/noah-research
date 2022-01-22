@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
 from typing import List, Union, Tuple
+import pandas as pd 
 
 
 def cummax(X: np.ndarray, return_ind=False) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
@@ -152,11 +153,13 @@ def plot_results(path_to_res, maximisation: bool, n_acqs: Optional[int] = None, 
         seeds: list of seeds to consider (all if `None`)
         **plt_kwargs: plot options
 
-    Returns:
+    Returns: 
 
     """
     # hack2: 
-    path_to_res = "results_triplet"
+    # path_to_res = "results_triplet"
+    import pdb
+    pdb.set_trace()
     results: List[np.array] = []
     if seeds is not None:
         paths: List[str] = [os.path.join(path_to_res, f"seed{i}") for i in seeds]
@@ -164,7 +167,7 @@ def plot_results(path_to_res, maximisation: bool, n_acqs: Optional[int] = None, 
         paths: List[str] = glob.glob(path_to_res + '/seed*')
 
     # hack: 
-    # paths = ["results_triplet"] 
+    paths = [path_to_res] 
     
     # print("    paths", paths) # empty list 
     for path_to_res in paths:
@@ -190,12 +193,18 @@ def plot_results(path_to_res, maximisation: bool, n_acqs: Optional[int] = None, 
             # print('sample_properties', result['sample_properties']) 
         print("")
         print("path", path_to_res)
-        print("Best Penalized Log P:")
+        print("MAX SCORE:")
         print(np.max(result['opt_point_properties'])) 
-        print("Best Mol:")
-        idx_best = np.argmax(result['opt_point_properties']) 
-        print(result['opt_points'][idx_best]) 
-        print("Best Model Version:", result['opt_model_version'][idx_best])
+        print("MIN SCORE:")
+        print(np.min(result['opt_point_properties'])) 
+        print("MAX STR:")
+        idx_max = np.argmax(result['opt_point_properties']) 
+        print(result['opt_points'][idx_max]) 
+        print("MIN STR:")
+        idx_min = np.argmin(result['opt_point_properties']) 
+        print(result['opt_points'][idx_min]) 
+        print("Best Model Version if Maximizing (ie logp):", result['opt_model_version'][idx_max])
+        print("Best Model Version Minimizing (ie expr):", result['opt_model_version'][idx_min])
         print("possible model verisons: ", np.unique(result['opt_model_version']) )# ,result['opt_model_version'].max )
         print('params', result['params'])  
         
@@ -206,4 +215,13 @@ def plot_results(path_to_res, maximisation: bool, n_acqs: Optional[int] = None, 
         regret = get_cummax(results)
     else:
         regret = get_cummin(results)
-    return plot_mean_std(regret, ax=ax, **plt_kwargs)
+    
+    regret = np.array(regret)
+    regret = pd.DataFrame(regret).to_csv('expr_results_huawei.csv', header=None, index=None)
+    regret = pd.read_csv('expr_results_huawei.csv', header=None).values #.tolist() 
+    # regret = [regret[i] for i in range(5)] 
+    print(regret.shape) 
+    
+    # import pdb
+    # pdb.set_trace() 
+    return plot_mean_std(regret, ax=ax, **plt_kwargs) 

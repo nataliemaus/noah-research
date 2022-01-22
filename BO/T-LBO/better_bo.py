@@ -19,4 +19,3 @@ vae: JTVAE = JTVAE.load_from_checkpoint(path_to_model, vocab=vcb)
 # ... now see bayesopt repo to implement 
 # step 1: need to create z's parid w/ y's dataset to train MDN on! 
 # starting that now
-

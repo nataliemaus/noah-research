@@ -83,7 +83,8 @@ def retrain_model(model, datamodule: WeightedExprDataset, save_dir: str, version
     # Fit model
     trainer.fit(model, datamodule)
 
-
+# first_time = True
+# firts_time = True 
 def get_pretrained_model_path(version: int, k, ignore_percentile, good_percentile,
                               predict_target: bool,
                               metric_loss: str, metric_loss_kw: Dict[str, Any],
@@ -118,7 +119,11 @@ def get_pretrained_model_path(version: int, k, ignore_percentile, good_percentil
         beta_target_pred_loss=beta_target_pred_loss,
         metric_loss_kw=metric_loss_kw),
         f'lightning_logs/version_{version}/checkpoints/', 'best.ckpt')
+
+    model_path = "expr_results2/retraining/retrain_0/checkpoints/last.ckpt"
     paths = glob.glob(model_path)
+    # import pdb
+    # pdb.set_trace()
     assert len(paths) == 1, model_path
     return paths[0]
 
@@ -463,6 +468,10 @@ def main():
 
     args = parser.parse_args()
 
+    # print('args added ')
+    # import pdb
+    # pdb.set_trace()
+
     if not is_robust(args.acq_func_id):
         args.estimate_rec_error = 0
     if 'ErrorAware' in args.acq_func_id:
@@ -540,10 +549,11 @@ def main():
         semi_supervised=args.semi_supervised,
         use_pretrained=args.use_pretrained
     )
+    result_dir = 'expr_results2'
     print(f'result dir: {result_dir}')
     os.makedirs(result_dir, exist_ok=True)
     save_w_pickle(args, result_dir, 'args.pkl')
-    logs = ''
+    logs = '' 
     exc: Optional[Exception] = None
     try:
         main_aux(args, result_dir=result_dir)
