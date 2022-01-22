@@ -19,7 +19,9 @@ class BaseVAE(pl.LightningModule):
     def __init__(self, hparams):
         super().__init__()
 
-        self.hparams = hparams
+        # self.hparams = hparams
+        # MY CHANGE: (NATALLIE )
+        self.hparams_dict = hparams
         self.save_hyperparameters()
         self.latent_dim: int = hparams.latent_dim
         if not hasattr(hparams, 'predict_target'):  # backward compatibility
@@ -283,11 +285,11 @@ class BaseVAE(pl.LightningModule):
 
         # Check if the warmup is over and if it's the right step to increment beta
         if (
-                self.global_step > self.hparams.beta_warmup
-                and self.global_step % self.hparams.beta_step_freq == 0
+                self.global_step > self.hparams_dict.beta_warmup
+                and self.global_step % self.hparams_dict.beta_step_freq == 0
         ):
             # Multiply beta to get beta proposal
-            self.beta = min(self.hparams.beta_final, self.beta * self.hparams.beta_step)
+            self.beta = min(self.hparams_dict.beta_final, self.beta * self.hparams_dict.beta_step)
 
     # Methods to overwrite (ones that differ between specific VAE implementations)
     def encode_to_params(self, x):
@@ -302,9 +304,9 @@ class BaseVAE(pl.LightningModule):
         raise NotImplementedError
 
     def training_step(self, batch, batch_idx, m: Optional[float] = None, M: Optional[float] = None):
-        if hasattr(self.hparams, 'cuda') and self.hparams.cuda is not None:
-            self.log(f"cuda:{self.hparams.cuda}",
-                     pl.core.memory.get_gpu_memory_map()[f'gpu_id: {self.hparams.cuda}/memory.used (MB)'],
+        if hasattr(self.hparams_dict, 'cuda') and self.hparams_dict.cuda is not None:
+            self.log(f"cuda:{self.hparams_dict.cuda}",
+                     pl.core.memory.get_gpu_memory_map()[f'gpu_id: {self.hparams_dict.cuda}/memory.used (MB)'],
                      prog_bar=True)
         self._increment_beta()
         self.log("beta", self.beta, prog_bar=True)
@@ -315,9 +317,9 @@ class BaseVAE(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx, m: Optional[float] = None, M: Optional[float] = None):
-        if hasattr(self.hparams, 'cuda') and self.hparams.cuda is not None:
-            self.log(f"cuda:{self.hparams.cuda}",
-                     pl.core.memory.get_gpu_memory_map()[f'gpu_id: {self.hparams.cuda}/memory.used (MB)'],
+        if hasattr(self.hparams_dict, 'cuda') and self.hparams_dict.cuda is not None:
+            self.log(f"cuda:{self.hparams_dict.cuda}",
+                     pl.core.memory.get_gpu_memory_map()[f'gpu_id: {self.hparams_dict.cuda}/memory.used (MB)'],
                      prog_bar=True)
         self.logging_prefix = "val"
         self.log_progress_bar = True
@@ -327,10 +329,10 @@ class BaseVAE(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        opt = torch.optim.Adam(self.parameters(), lr=self.hparams.lr)
+        opt = torch.optim.Adam(self.parameters(), lr=self.hparams_dict.lr)
         # No scheduling
         sched = {'scheduler': torch.optim.lr_scheduler.ReduceLROnPlateau(opt, 'min', factor=.2, patience=1,
-                                                                         min_lr=self.hparams.lr),
+                                                                         min_lr=self.hparams_dict.lr),
                  'interval': 'epoch',
                  'monitor': 'loss/val'
                  }

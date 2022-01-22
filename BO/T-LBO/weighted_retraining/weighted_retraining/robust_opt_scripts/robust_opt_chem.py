@@ -507,7 +507,7 @@ def main():
     pl.seed_everything(args.seed)
 
     # create result directory 
-    result_path = "abc_results" 
+    result_path = "abc_results_run2" 
     # os.path.join puts slash between two paths automatically 
     result_dir = os.path.join(result_path, f'seed{args.seed}')
     
@@ -599,22 +599,22 @@ def main_aux(args, result_dir: str):
         print("             X")
         print("             X")
         vae: JTVAE = JTVAE.load_from_checkpoint(args.pretrained_model_file, vocab=datamodule.vocab)
-        vae.beta = vae.hparams.beta_final  # Override any beta annealing
+        vae.beta = vae.hparams_dict.beta_final  # Override any beta annealing
         vae.metric_loss = args.metric_loss
-        vae.hparams.metric_loss = args.metric_loss
+        vae.hparams_dict.metric_loss = args.metric_loss
         vae.beta_metric_loss = args.beta_metric_loss
-        vae.hparams.beta_metric_loss = args.beta_metric_loss
+        vae.hparams_dict.beta_metric_loss = args.beta_metric_loss
         vae.metric_loss_kw = args.metric_loss_kw
-        vae.hparams.metric_loss_kw = args.metric_loss_kw
+        vae.hparams_dict.metric_loss_kw = args.metric_loss_kw
         vae.predict_target = args.predict_target
-        vae.hparams.predict_target = args.predict_target
+        vae.hparams_dict.predict_target = args.predict_target
         vae.beta_target_pred_loss = args.beta_target_pred_loss
-        vae.hparams.beta_target_pred_loss = args.beta_target_pred_loss
+        vae.hparams_dict.beta_target_pred_loss = args.beta_target_pred_loss
         vae.target_predictor_hdims = args.target_predictor_hdims
-        vae.hparams.target_predictor_hdims = args.target_predictor_hdims
+        vae.hparams_dict.target_predictor_hdims = args.target_predictor_hdims
         if vae.predict_target and vae.target_predictor is None:
-            vae.hparams.target_predictor_hdims = args.target_predictor_hdims
-            vae.hparams.predict_target = args.predict_target
+            vae.hparams_dict.target_predictor_hdims = args.target_predictor_hdims
+            vae.hparams_dict.predict_target = args.predict_target
             vae.build_target_predictor()
     else:
         print("             XX")
@@ -679,11 +679,11 @@ def main_aux(args, result_dir: str):
         torch.save(ckpt, pretrained_model_path)
         print(f"Loading model from {pretrained_model_path}")
         vae.load_from_checkpoint(pretrained_model_path, vocab=datamodule.vocab)
-        if args.predict_target and not hasattr(vae.hparams, 'predict_target'):
-            vae.hparams.target_predictor_hdims = args.target_predictor_hdims
-            vae.hparams.predict_target = args.predict_target
-        # vae.hparams.cuda = args.cuda
-        vae.beta = vae.hparams.beta_final  # Override any beta annealing
+        if args.predict_target and not hasattr(vae.hparams_dict, 'predict_target'):
+            vae.hparams_dict.target_predictor_hdims = args.target_predictor_hdims
+            vae.hparams_dict.predict_target = args.predict_target
+        # vae.hparams_dict.cuda = args.cuda
+        vae.beta = vae.hparams_dict.beta_final  # Override any beta annealing
         vae.eval()
 
         # Set up some stuff for the progress bar

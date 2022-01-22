@@ -33,7 +33,7 @@ if guacamol:
 
 # TAKES IN SINGLE SMILES, GIVES SCORE! 
 
-# 
+# tmux attach -t dock_huawei
 
 def hardcoded_smile_to_guacamol(smile):
     obj_func_key = 'rano'
@@ -54,6 +54,9 @@ if tdc_dock:
     tdc_oracle = Oracle(name=protien_name) 
     import time
     from multiprocessing.pool import ThreadPool 
+    # import wandb
+    # tracker = wandb.init(entity="nmaus", project="huawei_docking", config={"task":"dock_3pbl"})
+
 
 def smile_is_valid_mol(smile):
     if smile is None or len(smile)==0:
@@ -72,9 +75,12 @@ def smiles_to_dock_3pbl(smiles_str):
     score = smile_to_tdc_docking_score(smiles_str, tdc_oracle=tdc_oracle)
     if score is None:
         score = 0
+    else:
+        score = score * -1 # turn min to max prob! 
     # record score in csv file!! 
+    # tracker.log({"score":score})
     List=[str(score)]
-    with open('true_dock_3pbl_results.csv', 'a') as f_object: 
+    with open('true_dock_3pbl_results_run2.csv', 'a') as f_object: 
         writer_object = writer(f_object)
         writer_object.writerow(List)
         f_object.close()
