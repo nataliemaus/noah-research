@@ -90,7 +90,7 @@ target_predictor_hdims='[128,128]'
 if ((predict_target == 0)); then predict_target=''; else predict_target='--predict_target'; fi
 
 #-- Choose the metric loss you want to use -- (default contrastive: 1, default triplet: 5) --#
-metric_loss_ind=3
+metric_loss_ind=6
 metric_losses=('' 'contrastive' 'contrastive' 'contrastive' 'contrastive' 'triplet' 'triplet' 'triplet' 'log_ratio')
 metric_loss_kws=("" "{'threshold':.1}" "{'threshold':.1,'hard':True}" "{'threshold':.05,'hard':True}"
   "{'threshold':.2,'hard':True}" "{'threshold':.1}" "{'threshold':.1,'soft':True}"
@@ -103,7 +103,7 @@ beta_metric_loss="${beta_metric_loss_s[$metric_loss_ind]}"
 batch_size="${batch_size_s[$metric_loss_ind]}"
 
 #-- Choose whether to use the pretrained model (0: SLBO-Zero | 1: all other cases) --#
-use_pretrained=0
+use_pretrained=1
 if ((use_pretrained == 0)); then n_init_retrain_epochs=600; else n_init_retrain_epochs=1; fi
 if ((use_pretrained == 0)); then lr=1e-2; else lr=1e-3; fi
 if ((use_pretrained == 0)); then use_pretrained=''; else use_pretrained='--use_pretrained'; fi
@@ -115,7 +115,7 @@ beta_final=0.04 # same as in train-expr-pt.sh
 semi_supervised=0
 n_init_bo_points=105
 if ((semi_supervised == 0)); then n_init_bo_points=''; else n_init_bo_points="--n_init_bo_points ${n_init_bo_points}"; fi
-if ((semi_supervised == 0)); then query_budget=500; else query_budget=1000; fi
+if ((semi_supervised == 0)); then query_budget=10000; else query_budget=10000; fi
 if ((semi_supervised == 0)); then semi_supervised=''; else semi_supervised='--semi_supervised'; fi
 
 #-- Choose whether to use BO or random search --#

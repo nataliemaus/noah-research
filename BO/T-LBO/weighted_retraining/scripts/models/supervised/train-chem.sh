@@ -2,8 +2,9 @@
 
 # for this task we use the BO script of the molecule design task to get the training done
 
-# Meta flags
+# Meta flags 
 gpu="--gpu" # change to "" if no GPU is to be used
+# gup = ""
 train_data_path="weighted_retraining/data/chem/zinc/orig_model/tensors_train"
 val_data_path="weighted_retraining/data/chem/zinc/orig_model/tensors_val"
 vocab_file_path="weighted_retraining/data/chem/zinc/orig_model/vocab.txt"
@@ -23,7 +24,7 @@ target_predictor_hdims='[128,128]'
 if ((predict_target == 0)); then predict_target=''; else predict_target='--predict_target'; fi
 
 #-- Choose the metric loss you want to use -- (default contrastive: 2, default triplet: 3) --#
-metric_loss_ind=2
+metric_loss_ind=3
 metric_losses=('' 'contrastive' 'contrastive' 'triplet' 'triplet' 'triplet' 'log_ratio')
 metric_loss_kws=("" "{'threshold':.05,'hard':True}" "{'threshold':.1}" "{'threshold':.1,'soft':True}"
                   "{'threshold':.2,'soft':True}" "{'threshold':.1,'soft':True,'eta':0.05}" "{}")
@@ -33,7 +34,7 @@ if ((metric_loss_ind == 0)); then metric_loss_kw=''; else metric_loss_kw="--metr
 batch_size_s=(32 256 256 1024 1024 1024 128)
 batch_size=${batch_size_s[$metric_loss_ind]}
 save_model_id=${save_model_ids[$metric_loss_ind]}
-save_model_path="./weighted_retraining/assets/pretrained_models/chem_$save_model_id/chem.ckpt"
+save_model_path="./weighted_retraining/assets/pretrained_models/og_chem_$save_model_id/chem.ckpt"
 beta_metric_loss=1
 
 #-- Start from pretrained vanilla JTVAE

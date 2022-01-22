@@ -5,9 +5,9 @@ gpu="--gpu" # change to "" if no GPU is to be used
 train_data_path="weighted_retraining/data/chem/zinc/orig_model/tensors_train"
 val_data_path="weighted_retraining/data/chem/zinc/orig_model/tensors_val"
 vocab_file_path="weighted_retraining/data/chem/zinc/orig_model/vocab.txt"
-property_file_path="weighted_retraining/data/chem/zinc/orig_model/pen_logP_all.pkl"
+property_file_path="weighted_retraining/data/chem/zinc/orig_model/should_not_matter.txt"  #*none is hardcoded, this no longer matters  # rano_all.csv"  # qed_all.pkl"  # pen_logP_all.pkl"
 
-# Weighted retraining parameters
+# Weighted retraining parameters  
 k="1e-3"
 r=50
 weight_type="rank"
@@ -15,7 +15,7 @@ lso_strategy="opt"
 
 samples_per_model=0
 
-#-- Choose dimension of the latent space --#
+#-- Choose dimenion of the latent space --#
 latent_dim=56
 
 #-- Choose acquisition function --#
@@ -43,7 +43,7 @@ target_predictor_hdims='[128,128]'
 if ((predict_target == 0)); then predict_target=''; else predict_target='--predict_target'; fi
 
 #-- Choose the metric loss you want to use -- (default contrastive: 2, default triplet: 3) --#
-metric_loss_ind=3
+metric_loss_ind=5
 metric_losses=('' 'contrastive' 'contrastive' 'triplet' 'triplet' 'triplet' 'log_ratio')
 metric_loss_kws=("" "{'threshold':.05,'hard':True}" "{'threshold':.1}" "{'threshold':.1}" "{'threshold':.2,'soft':True}" "{'threshold':.1,'soft':True,'eta':0.05}" "{}")
 beta_metric_loss_s=(1 1 1 1 1 1 1)
@@ -89,7 +89,7 @@ n_rand_points=8000
 #-- Run on the following seeds (repeat so that it restarts - not from scratch - after a potential crash)
 seed_array=(0 1 2 3 4 0 1 2 3 4)
 
-#-- Choose on which GPU to run --#
+#-- Choose on which GPU to run --# 
 export CUDA_VISIBLE_DEVICES=0
 
 expt_index=0 # Track experiments
@@ -103,11 +103,11 @@ for seed in "${seed_array[@]}"; do
     continue
   fi
 
-  # Echo info of task to be executed
+  # Echo info of task to be executed 
   echo "r=${r} k=${k} seed=${seed}"
 
   # Run command
-  cmd="python ./weighted_retraining/weighted_retraining/robust_opt_scripts/robust_opt_chem.py \
+  cmd="python3 -m pdb ./weighted_retraining/weighted_retraining/robust_opt_scripts/robust_opt_chem.py \
             --seed=$seed $gpu \
             --query_budget=$query_budget \
             --retraining_frequency=$r \

@@ -17,7 +17,7 @@ target_predictor_hdims='[128,128]'
 if ((predict_target == 0)); then predict_target=''; else predict_target='--predict_target'; fi
 
 #-- Choose the metric loss you want to use --#
-metric_loss_ind=3
+metric_loss_ind=0
 metric_losses=('' 'contrastive' 'contrastive' 'contrastive' 'contrastive' 'triplet' 'triplet' 'log_ratio')
 metric_loss_kws=("" "{'threshold':.1}" "{'threshold':.1,'hard':True}" "{'threshold':.05,'hard':True}"
                  "{'threshold':.2,'hard':True}" "{'threshold':.1,'soft':True}"
